@@ -74,7 +74,6 @@
       if (this.settings.contenteditable) {
         var editor = this.$el;
         var that = this;
-        editor.focus();
         var t = editor.text();
         if(t.length > 0){
           for (var i = 0; i < $.fn.emojiPicker.emojis.length; ++i) {
@@ -97,7 +96,6 @@
           }
           that.getCeText();
         });
-        editor.trigger('click');
         editor.on('paste', function (e) {
           e.preventDefault();
           var text = (e.originalEvent || e).clipboardData.getData('text/plain') || prompt('Paste something..');
@@ -254,6 +252,10 @@
       var emojiUnicode = toUnicode(findEmoji(emojiShortcode).unicode);
 
       if (this.settings.contenteditable) {
+        if(typeof this.editorRange === 'undefined'){
+            this.$el.focus();
+            this.$el.trigger('input');
+        }
         var emojiHtml = "<img src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7' class='emojiCe " + $(e.target).attr('class') + "' data-unicode='" + emojiUnicode + "'/>";
         this.editorRange = insertAtCeCaret(emojiHtml, this.editorRange);
         this.getCeText();

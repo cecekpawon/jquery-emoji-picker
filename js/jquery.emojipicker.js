@@ -10,14 +10,18 @@
         iconBackgroundColor: '#eee',
         container: 'body',
         button: true,
-        contenteditable: false
+        contenteditable: false,
+        iconSizeSm: false,
+        wrapperClass: 'emojiPickerIconWrap',
+        unicode: false
       };
 
-  var MIN_WIDTH = 200,
+  var MIN_WIDTH = 250,
       MAX_WIDTH = 600,
       MIN_HEIGHT = 100,
       MAX_HEIGHT = 350,
       MAX_ICON_HEIGHT = 50;
+      MIN_ICON_HEIGHT = 15;
 
   function Plugin( element, options ) {
 
@@ -32,6 +36,8 @@
     this.settings.width = parseInt(this.settings.width);
     this.settings.height = parseInt(this.settings.height);
     this.settings.contenteditable = this.settings.contenteditable.constructor === Boolean ? this.settings.contenteditable : false;
+    this.settings.unicode = this.settings.unicode.constructor === Boolean ? this.settings.unicode : false;
+    this.settings.iconSizeSm = this.settings.iconSizeSm.constructor === Boolean ? this.settings.iconSizeSm : false;
 
     // Check for valid width/height
     if(this.settings.width >= MAX_WIDTH) {
@@ -74,14 +80,18 @@
       if (this.settings.contenteditable) {
         var editor = this.$el;
         var that = this;
-        var t = editor.text();
-        if(t.length > 0){
-          for (var i = 0; i < $.fn.emojiPicker.emojis.length; ++i) {
-            var emojiHtml = "<img src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7' class='emojiCe emoji-" + $.fn.emojiPicker.emojis[i].shortcode + "' data-unicode='" + toUnicode($.fn.emojiPicker.emojis[i].unicode) + "'/>";
-            t = t.replace(new RegExp(toUnicode($.fn.emojiPicker.emojis[i].unicode), 'g'), emojiHtml);
+
+        if (!this.settings.unicode) {
+          var t = editor.text();
+          if(t.length > 0){
+            for (var i = 0; i < $.fn.emojiPicker.emojis.length; ++i) {
+              var emojiUnicode = toUnicode($.fn.emojiPicker.emojis[i].unicode),
+               emojiHtml = "<img src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7' class='emojiCe emoji-" + $.fn.emojiPicker.emojis[i].shortcode + "' data-unicode='" + emojiUnicode + "'/>";
+              t = t.replace(new RegExp(emojiUnicode, 'g'), emojiHtml);
+            }
           }
+          editor.html(t);
         }
-        editor.html(t);
         editor.on('input click', function (e) {
           var element = this;
           var doc = element.ownerDocument || element.document;
@@ -96,6 +106,7 @@
           }
           that.getCeText();
         });
+
         editor.on('paste', function (e) {
           e.preventDefault();
           var text = (e.originalEvent || e).clipboardData.getData('text/plain') || prompt('Paste something..');
@@ -105,6 +116,8 @@
     },
 
     getCeText: function() {
+      if (this.settings.unicode) return;
+
       var editor = this.$el.clone();
       $('img', editor).each(function(){
         $(this).replaceWith($(this).data('unicode'));
@@ -116,9 +129,13 @@
       // The wrapper is not needed if they have chosen to not use a button
       if (this.settings.button) {
         var elementHeight = this.$el.outerHeight();
-        var iconHeight = elementHeight > MAX_ICON_HEIGHT ?
-          MAX_ICON_HEIGHT :
-          elementHeight;
+        var iconHeight = MIN_ICON_HEIGHT;
+
+        if (!this.settings.iconSizeSm) {
+          iconHeight = elementHeight > MAX_ICON_HEIGHT ?
+            MAX_ICON_HEIGHT :
+            elementHeight;
+        }
 
         // This can cause issues if the element is not visible when it is initiated
         var objectWidth = this.$el.width();
@@ -126,14 +143,15 @@
         this.$el.width(objectWidth);
 
         this.$wrapper = this.$el
-          .wrap("<div class='emojiPickerIconWrap'></div>")
+          .wrap("<div class='" + this.settings.wrapperClass + "'></div>")
           .parent();
 
         this.$icon = $('<div class="emojiPickerIcon"></div>')
           .height(iconHeight)
           .width(iconHeight)
           .addClass(this.settings.iconColor)
-          .css('backgroundColor', this.settings.iconBackgroundColor);
+          .css('backgroundColor', this.settings.iconBackgroundColor)
+          .attr('title', 'Emoji Picker');
           this.$wrapper.append( this.$icon );
       }
 
@@ -142,7 +160,7 @@
     createPicker: function() {
 
       // Show template
-      this.$picker = $( getPickerHTML() )
+      this.$picker = $( getPickerHTML(this) )
         .appendTo( this.$container )
         .width(this.settings.width)
         .height(this.settings.height)
@@ -153,14 +171,14 @@
         .height(parseInt(this.settings.height) - 40); // 40 is height of the tabs
 
       // Tab size based on width
-      if (this.settings.width < 240) {
-        this.$picker.find('.emoji').css({'width':'1em', 'height':'1em'});
+      if (this.settings.unicode || (this.settings.width < 250)) {
+        this.$picker.find('.emoji').css({'width':'1.3em', 'height':'1.3em'});
       }
 
     },
 
     listen: function() {
-      // If the button is being used, wrapper has not been set, 
+      // If the button is being used, wrapper has not been set,
       //    and will not need a listener
       if (this.settings.button){
         // Clicking on the picker icon
@@ -185,16 +203,16 @@
     },
 
     updatePosition: function() {
-  
+
       /*  Process:
-          1. Find the nearest positioned element by crawling up the ancestors, record it's offset 
+          1. Find the nearest positioned element by crawling up the ancestors, record it's offset
           2. Find the bottom left or right of the input element, record this (Account for position setting of left or right)
           3. Find the difference between the two, as this will become our new position
           4. Magic.
 
           N.B. The removed code had a reference to top/bottom positioning, but I don't see the use case for this..
-      */    
-     
+      */
+
       // Step 1
       // Luckily jquery already does this...
       var positionedParent = this.$picker.offsetParent();
@@ -250,13 +268,15 @@
     emojiClicked: function(e) {
       var emojiShortcode = $(e.target).attr('class').split('emoji-')[1];
       var emojiUnicode = toUnicode(findEmoji(emojiShortcode).unicode);
+      var emojiHtml = emojiUnicode;
 
       if (this.settings.contenteditable) {
         if(typeof this.editorRange === 'undefined'){
-            this.$el.focus();
             this.$el.trigger('input');
         }
-        var emojiHtml = "<img src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7' class='emojiCe " + $(e.target).attr('class') + "' data-unicode='" + emojiUnicode + "'/>";
+        if (!this.settings.unicode) {
+          emojiHtml = "<img src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7' class='emojiCe " + $(e.target).attr('class') + "' data-unicode='" + emojiUnicode + "'/>";
+        }
         this.editorRange = insertAtCeCaret(emojiHtml, this.editorRange);
         this.getCeText();
       }
@@ -321,22 +341,24 @@
 
   /* ---------------------------------------------------------------------- */
 
-  function getPickerHTML() {
+  function getPickerHTML(parent) {
     var nodes = [];
     var categories = [
-      { name: 'emotion',  symbol: 'grinning' },
-      { name: 'animal',   symbol: 'whale' },
-      { name: 'food',     symbol: 'hamburger' },
-      { name: 'folderol', symbol: 'sunny' },
-      { name: 'thing',    symbol: 'kiss' },
-      { name: 'travel',   symbol: 'rocket' }
+      { name: 'emotion',  symbol: 'grinning',   'unicode': '1F600' },
+      { name: 'animal',   symbol: 'whale',      'unicode': '1F433' },
+      { name: 'food',     symbol: 'hamburger',  'unicode': '1F354' },
+      { name: 'folderol', symbol: 'sunny',      'unicode': '2600'  },
+      { name: 'thing',    symbol: 'kiss',       'unicode': '1F48B' },
+      { name: 'travel',   symbol: 'rocket',     'unicode': '1F680' }
     ];
+
     var aliases = {
       'people':    'emotion',
       'symbol':    'thing',
       'undefined': 'thing'
     }
     var items = {};
+    var isUnicode = parent.settings.unicode;
 
     // Re-Sort Emoji table
     $.each($.fn.emojiPicker.emojis, function(i, emoji) {
@@ -348,23 +370,27 @@
     nodes.push('<div class="emojiPicker">');
     nodes.push('<nav>');
     for (var i in categories) {
+      var emoji_content = isUnicode ? toUnicode(categories[i].unicode) : '';
       nodes.push('<div class="tab' +
       ( i == 0 ? ' active' : '' ) +
       '" data-tab="' +
       categories[i].name +
       '"><div class="emoji emoji-' +
       categories[i].symbol +
-      '"></div></div>');
+      '" title="' + categories[i].name + '">' + emoji_content + '</div></div>');
     }
     nodes.push('</nav>');
+
     for (var i in categories) {
       nodes.push('<section class="' +
         categories[i].name +
         ( i == 0 ? '' : ' hidden' ) +
         '">');
       for (var j in items[ categories[i].name ] ) {
-        var emoji = items[ categories[i].name ][ j ];
-        nodes.push('<div class="emoji emoji-' + emoji.shortcode + '"></div>');
+        var emoji = items[ categories[i].name ][ j ],
+          emoji_content = isUnicode ? toUnicode(emoji.unicode) : '',
+          emoji_title = emoji.description;
+        nodes.push('<div class="emoji emoji-' + emoji.shortcode + '" title="' + emoji.description.toLowerCase() + '">' + emoji_content + '</div>');
       }
       nodes.push('</section>');
     }

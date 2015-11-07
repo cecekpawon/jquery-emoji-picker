@@ -272,7 +272,7 @@
 
       if (this.settings.contenteditable) {
         if(typeof this.editorRange === 'undefined'){
-            this.$el.trigger('input');
+          this.$el.focus().trigger('input');
         }
         if (!this.settings.unicode) {
           emojiHtml = "<img src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7' class='emojiCe " + $(e.target).attr('class') + "' data-unicode='" + emojiUnicode + "'/>";

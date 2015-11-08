@@ -40,7 +40,7 @@
     this.settings.iconSizeSm = this.settings.iconSizeSm.constructor === Boolean ? this.settings.iconSizeSm : false;
 
     // Check for valid width/height
-    if(this.settings.width >= MAX_WIDTH) {
+    if (this.settings.width >= MAX_WIDTH) {
       this.settings.width = MAX_WIDTH;
     } else if (this.settings.width < MIN_WIDTH) {
       this.settings.width = MIN_WIDTH;
@@ -51,16 +51,21 @@
       this.settings.height = MIN_HEIGHT;
     }
 
+    // Check for valid contenteditable
+    if (this.$el.attr('contenteditable')) {
+      this.settings.contenteditable = this.$el.attr('contenteditable').match(/true/i) ? true : false;
+    }
+
     var possiblePositions = [ 'left',
                               'right'
                               /*,'top',
                               'bottom'*/];
-    if($.inArray(this.settings.position,possiblePositions) == -1) {
+    if ($.inArray(this.settings.position,possiblePositions) == -1) {
       this.settings.position = defaults.position; //current default
     }
 
     // Do not enable if on mobile device (emojis already present)
-    if(!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+    if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
       this.init();
     }
 
@@ -83,7 +88,7 @@
 
         if (!this.settings.unicode) {
           var t = editor.text();
-          if(t.length > 0){
+          if (t.length > 0){
             for (var i = 0; i < $.fn.emojiPicker.emojis.length; ++i) {
               var emojiUnicode = toUnicode($.fn.emojiPicker.emojis[i].unicode),
                emojiHtml = "<img src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7' class='emojiCe emoji-" + $.fn.emojiPicker.emojis[i].shortcode + "' data-unicode='" + emojiUnicode + "'/>";
@@ -100,6 +105,7 @@
           sel = win.getSelection();
           if (sel.rangeCount > 0) {
             var range = sel.getRangeAt(0);
+            //range.deleteContents();
             sel.removeAllRanges();
             sel.addRange(range);
             that.editorRange = range;
@@ -220,7 +226,7 @@
 
       // Step 2
       var elOffset = this.$el.offset();
-      if(this.settings.position == 'right'){
+      if (this.settings.position == 'right'){
         elOffset.left += this.$el.outerWidth() - this.settings.width;
       }
       elOffset.top += this.$el.outerHeight();
@@ -271,7 +277,7 @@
       var emojiHtml = emojiUnicode;
 
       if (this.settings.contenteditable) {
-        if(typeof this.editorRange === 'undefined'){
+        if (typeof this.editorRange === 'undefined'){
           this.$el.focus().trigger('input');
         }
         if (!this.settings.unicode) {
@@ -438,10 +444,14 @@
     while ((node = el.firstChild)) {
       lastNode = frag.appendChild(node);
     }
+    //range.deleteContents();
     range.insertNode(frag);
     if (lastNode) {
       range.setStartAfter(lastNode);
       range.collapse(false);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
     return range;
   }

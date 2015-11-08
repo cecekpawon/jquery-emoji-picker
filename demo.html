@@ -18,34 +18,37 @@
         height: '200px',
         button: false
       });
-      
-      $('#input-default').emojiPicker();
-
-      $('#input-custom-size').emojiPicker({
-        width: '300px',
-        height: '200px'
-      });
-
-      $('#input-left-position').emojiPicker({
-        position: 'left'
-      });
 
       $('#trigger').click(function(e) {
         e.preventDefault();
         $('#text-custom-trigger').emojiPicker('toggle');
       });
 
+      $('#input-default').emojiPicker();
+
+      $('#input-custom-size').emojiPicker({
+        width: '300px',
+        height: '200px'
+      });
+/*
+      $('#input-left-position').emojiPicker({
+        position: 'left'
+      });
+*/
+      $('#text-editable').emojiPicker();
+
     });
   </script>
 
   <style type="text/css">
     body {background:#888;}
-    form {margin:200px 0 0 0; text-align:center;}
+    form {text-align:center;}
     input {width:400px; height:30px;}
     input,textarea,button {padding:5px 10px; font-family:"Helvetica Neue", "Helvetica", "Arial", sans-serif; font-size:24px; font-weight:300; outline:none; border:none;}
     #emojiPickerWrap {margin:10px 0 0 0;}
     .field { padding: 20px 0; }
     textarea { width: 400px; height: 200px; }
+    .diveditable { height: 200px; width: 420px; background-color: white; margin: auto;text-align: left; }
   </style>
 
 </head>
@@ -66,9 +69,14 @@
     <div class="field">
       <input type="text" id="input-custom-size" class="emojiable-option" placeholder="Custom Size">
     </div>
-
+<!--
     <div class="field">
       <input type="text" id="input-left-position" class="emojiable-option" placeholder="Position Left">
+    </div>
+-->
+    <h2>contenteditable</h2>
+    <div class="field">
+      <div id="text-editable" contenteditable="true" class="diveditable"></div>
     </div>
 
   </form>
